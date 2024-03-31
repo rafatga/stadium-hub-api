@@ -1,0 +1,96 @@
+version: '3.9'
+
+networks:
+  stha-network:
+    driver: bridge
+  stadium-network-proxy:
+    external: true
+
+services:
+
+  ####################################################################################################
+  # PHP
+  ####################################################################################################
+  php-fpm:
+    container_name: ${CONTAINER_CODE_NAME}
+    tty: true
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    build:
+      context: ./
+      dockerfile: ./php/Dockerfile
+    restart: unless-stopped
+    volumes:
+#      - ./logs/php.log:/var/log/fpm-php.www.log
+      - ./php/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./php/supervisord-app.conf:/etc/supervisor.d/supervisord.ini
+      - ../../:/var/www/html
+    networks:
+      stha-network:
+      stadium-network-proxy:
+    environment:
+      APP_URL: ${APP_URL}
+      DB_HOST: ${DB_HOST}
+      DB_PORT:  ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - db
+
+  ####################################################################################################
+  # Nginx -> https://blog.devsense.com/2019/php-nginx-docker
+  ####################################################################################################
+  nginx:
+    container_name: ${CONTAINER_SERVER_NAME}
+    image: nginx:alpine
+    restart: always
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ../..:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+#      - ./logs/nginx:/var/log/nginx/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-${CONTAINER_SERVER_NAME}.rule=Host(`api.stadium-hub.loc`)"
+      - "traefik.docker.network=stadium-network-proxy"
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.stha-server-1.rule=Host(`api.stadium-hub.loc`)
+#      - traefik.http.services.stha-server-1.loadbalancer.server.port=80
+#      - traefik.http.routers.stha-server-1_route.service=stha-server-1_service
+    networks:
+      stha-network:
+      stadium-network-proxy:
+    depends_on:
+      - php-fpm
+      - db
+    #TODO add healthcheck -> the code should only start when nginx is fully initizalized
+    #Test make start, make open -> you will get error "502 Bad Gateway"
+
+  ####################################################################################################
+  # DATABASE (MySQL)
+  ####################################################################################################
+  db:
+    container_name: ${CONTAINER_MYSQL_NAME}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    image: mysql:8.1
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - "stha-mysql:/var/lib/mysql"
+    networks:
+      stha-network:
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+volumes:
+  stha-mysql:
+    driver: local
