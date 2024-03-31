@@ -1,42 +1,37 @@
 # ✨ Stadium Hub Api
 
-- [Environment](#environment)
-- [Installation](#installation)
-- [Deploy](#deploy)
+- [Environment](##environment)
+- [Installation](##installation)
+- [Starting Project](##Starting)
+- [Deploy](##deploy)
 
 
 ## Environments
-- http://stadium-hub-api.loc (local)
-- http://stadium-hub-api.loc:9011 (local)
+- http://api.stadium-hub.loc (traefik proxy local)
+- http://api.stadium-hub.loc:8077 (local)
 
 ## Installation
-
 ### System requirements
-- Php 8.2
-- Php (exif, bcmath, gd, xsl, intl, gettext, zip, opcache, pdo_mysql) extension
+- Docker
 
 ### Local docker installation:
-- Clone project
+- (Step 1) -> Clone project
 ```
 git clone -b develop https://github.com/rafatga/stadium-hub-api
 ```
-- (Step 0)
+- (Step 2) -> host config
 ```
 [mac] -> /etc/hosts
 [ubuntu] -> /etc/hosts
 [windows] -> C:\Windows\system32\drivers\etc\hosts
 
-127.0.0.1       stadium-hub-api.loc
+127.0.0.1       api.stadium-hub.loc
 ```
-- (Step 1)
+- (Step 3) -> Build docker image
 ```
 make bootup
 ```
-- (Step 2)
-```
-make start
-```
-- (Step 3)
+- (Step 4) -> Database config (make sure this match .env variables)
 ```
 Host: 127.0.0.1
 Database: stadium-hub-api
@@ -44,15 +39,13 @@ Username: boss
 Password: root
 Port: 3307
 ```
-- (Step 4) (optional)
+
+## Starting Project (Without traefik proxy)
+### [1] Start project
 ```
-make enter -> it-code-1
+make start
 ```
-- (Step 7)
-```
-make open | browser -> http://stadium-hub-api.loc:9011
-```
-- (Step 8)
+### [2] Stop project
 ```
 make stop
 ```
