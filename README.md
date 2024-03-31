@@ -66,3 +66,7 @@ Merge develop into main branch
 run command in your local machine
 make deploy
 ```
+
+## TODO
+- Add CI/CD with GitHub Actions 
+- Config PhpStorm debugger
